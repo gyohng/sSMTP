@@ -68,21 +68,21 @@ bool_t use_oldauth = False;		/* use old AUTH LOGIN username style */
 
 #define ARPADATE_LENGTH 32		/* Current date in RFC format */
 char arpadate[ARPADATE_LENGTH];
-char *auth_user = '\0';
-char *auth_pass = '\0';
-char *auth_method = '\0';		/* Mechanism for SMTP authentication */
-char *mail_domain = '\0';
-char *from = '\0';		/* Use this as the From: address */
+char *auth_user = NULL;
+char *auth_pass = NULL;
+char *auth_method = NULL;		/* Mechanism for SMTP authentication */
+char *mail_domain = NULL;
+char *from = NULL;		/* Use this as the From: address */
 char *hostname;
 char *mailhost = "mailhub";
-char *minus_f = '\0';
-char *minus_F = '\0';
+char *minus_f = NULL;
+char *minus_F = NULL;
 char *gecos;
-char *prog = '\0';
-char *root = NULL;
+char *prog = NULL;
+char *root = NULL;;
 char *tls_cert = "/etc/ssl/certs/ssmtp.pem";	/* Default Certificate */
-char *uad = '\0';
-char *config_file = '\0';		/* alternate configuration file */
+char *uad = NULL;
+char *config_file = NULL;		/* alternate configuration file */
 
 headers_t headers, *ht;
 
@@ -912,6 +912,11 @@ bool_t read_config()
 		/* Make comments invisible */
 		if((p = strchr(buf, '#'))) {
 			*p = '\0';
+
+			/* Revert, if a part of the password */
+			if (strcasestr(buf, "AuthPass") != NULL) {
+				*p = '#';
+			}
 		}
 
 		/* Ignore malformed lines and comments */
@@ -1569,7 +1574,7 @@ int ssmtp(char *argv[])
 		else {
 #endif
 		memset(buf, 0, bufsize);
-		to64frombits(buf, auth_user, strlen(auth_user));
+		to64frombits((unsigned char*)buf, (const unsigned char*)auth_user, strlen(auth_user));
 		if (use_oldauth) {
 			outbytes += smtp_write(sock, "AUTH LOGIN %s", buf);
 		}
@@ -1581,7 +1586,7 @@ int ssmtp(char *argv[])
 			}
 			/* we assume server asked us for Username */
 			memset(buf, 0, bufsize);
-			to64frombits(buf, auth_user, strlen(auth_user));
+			to64frombits((unsigned char*)buf, (const unsigned char*)auth_user, strlen(auth_user));
 			outbytes += smtp_write(sock, buf);
 		}
 
@@ -1591,7 +1596,7 @@ int ssmtp(char *argv[])
 		}
 		memset(buf, 0, bufsize);
 
-		to64frombits(buf, auth_pass, strlen(auth_pass));
+		to64frombits((unsigned char*)buf, (const unsigned char*)auth_pass, strlen(auth_pass));
 #ifdef MD5AUTH
 		}
 #endif
